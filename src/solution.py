@@ -1,3 +1,6 @@
+## Student Name:
+## Student ID: 
+
 """
 Stub file for the meeting slot suggestion exercise.
 

@@ -1,3 +1,6 @@
+## Student Name:
+## Student ID: 
+
 """
 Public test suite for the meeting slot suggestion exercise.
 

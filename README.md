@@ -1,3 +1,7 @@
+## TODO:
+## Student Name:
+## Student ID: 
+
 # Meeting Slot Suggestion Lab Repository
 
 This repository contains the starter code, templates, and tests for the **Requirements Specification II** lab. Students will implement a meeting slot suggestion function, write specifications, and explore the impact of requirements completeness on AI‑assisted coding.
