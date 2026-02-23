@@ -35,11 +35,16 @@ def suggest_slots(events: List[Dict[str, str]], meeting_duration: int, day: str)
         return []
 
     def to_minutes(hhmm: str) -> int:
+        hhmm = hhmm.strip()
         h, m = hhmm.split(":")
         return int(h) * 60 + int(m)
 
     def to_hhmm(x: int) -> str:
         return f"{x//60:02d}:{x%60:02d}"
+
+    # Normalize day (handles "Fri", "Friday", "FRI ", etc.)
+    day_norm = (day or "").strip().lower()
+    is_friday = day_norm.startswith("fri")  # matches "fri" and "friday"
 
     WORK_START = to_minutes("09:00")
     WORK_END   = to_minutes("17:00")
@@ -59,11 +64,9 @@ def suggest_slots(events: List[Dict[str, str]], meeting_duration: int, day: str)
         if t <= s:
             continue
 
-        # If completely outside, ignore
         if t <= WORK_START or s >= WORK_END:
             continue
 
-        # Clip to working window
         s = max(s, WORK_START)
         t = min(t, WORK_END)
         if t > s:
@@ -78,9 +81,17 @@ def suggest_slots(events: List[Dict[str, str]], meeting_duration: int, day: str)
         else:
             merged[-1][1] = max(merged[-1][1], t)
 
+    # Latest possible start time given duration
     latest_start = WORK_END - meeting_duration
     if latest_start < WORK_START:
         return []
+
+    # Friday cutoff: must start at or before 15:00
+    if is_friday:
+        friday_cutoff = to_minutes("15:00")
+        latest_start = min(latest_start, friday_cutoff)
+        if latest_start < WORK_START:
+            return []
 
     res: List[str] = []
     start = WORK_START

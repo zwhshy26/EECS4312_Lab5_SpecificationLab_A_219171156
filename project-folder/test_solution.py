@@ -151,7 +151,7 @@ def test_event_partially_outside_work_hours_is_clipped():
     assert "16:00" in slots        # [16:00,16:30) OK
     assert "16:15" not in slots    # overlaps [16:30,17:00)
     assert "16:30" not in slots    # starts inside busy portion
-    
+
 
 def test_invalid_event_is_ignored():
     """
@@ -177,3 +177,43 @@ def test_no_slots_start_during_lunch_for_longer_meeting():
     assert "12:15" not in slots
     assert "12:30" not in slots
     assert "12:45" not in slots
+
+def test_friday_cutoff_excludes_after_1500():
+    # No events: normally we'd get slots up to 16:00 for a 60-min meeting,
+    # but on Friday we must exclude anything starting after 15:00.
+    events = []
+    res = suggest_slots(events, meeting_duration=60, day="Fri")
+
+    assert "15:00" in res
+    assert "15:15" not in res
+    assert "15:30" not in res
+    assert "16:00" not in res
+
+
+def test_friday_cutoff_even_if_long_meeting_still_caps_by_start_time():
+    # 120-min meeting: on a normal day latest start is 15:00 (ends at 17:00)
+    # Friday cutoff is also 15:00, so "15:00" should be allowed, "15:15" not.
+    events = []
+    res = suggest_slots(events, meeting_duration=120, day="Fri")
+
+    assert "15:00" in res
+    assert "15:15" not in res
+
+
+def test_non_friday_not_capped_at_1500():
+    # Same as first test, but not Friday: 60-min meeting can start at 16:00.
+    events = []
+    res = suggest_slots(events, meeting_duration=60, day="Thu")
+
+    assert "16:00" in res
+    assert "16:15" not in res  # would end after 17:00
+
+
+def test_friday_cutoff_with_busy_time_before_cutoff():
+    # Busy from 14:00-15:00 means 15:00 is still a valid start (meeting starts at 15:00).
+    # But anything after 15:00 is still excluded by Friday rule.
+    events = [{"start": "14:00", "end": "15:00"}]
+    res = suggest_slots(events, meeting_duration=30, day="Fri")
+
+    assert "15:00" in res
+    assert "15:15" not in res
